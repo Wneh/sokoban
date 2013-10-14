@@ -1,6 +1,6 @@
-
 public enum Symbol {
 	WALL, FREE, BOX, PLAYER, PLAYERGOAL, BOXGOAL, GOAL;
+	
 
 	static Symbol get(char type) {
 		switch(type) {

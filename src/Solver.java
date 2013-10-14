@@ -24,33 +24,33 @@ public class Solver {
 
 		//BufferedReader br = new BufferedReader(new FileReader(new File("test000.in")));
 
-		BufferedReader br = new BufferedReader(new FileReader(new File("src/test000.in")));
-
-		String line;
-		StringBuilder board = new StringBuilder();
-		while((line = br.readLine()) != null) {
-			height++;
-			int tempLength = line.length();
-			if(tempLength > width) {
-				width = tempLength;
-			}
-			board.append(line).append('\n');
-		}
-		return board.toString();
-//				BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-//				
-//				String line;
-//				StringBuilder board = new StringBuilder();
-//				while(br.ready()) {
-//					line = br.readLine();
-//					height++;
-//					int tempLength = line.length();
-//					if(tempLength > width) {
-//						width = tempLength;
-//					}
-//					board.append(line).append('\n');
-//				}
-//				return board.toString();
+//		BufferedReader br = new BufferedReader(new FileReader(new File("src/test000.in")));
+//
+//		String line;
+//		StringBuilder board = new StringBuilder();
+//		while((line = br.readLine()) != null) {
+//			height++;
+//			int tempLength = line.length();
+//			if(tempLength > width) {
+//				width = tempLength;
+//			}
+//			board.append(line).append('\n');
+//		}
+//		return board.toString();
+				BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+				
+				String line;
+				StringBuilder board = new StringBuilder();
+				while(br.ready()) {
+					line = br.readLine();
+					height++;
+					int tempLength = line.length();
+					if(tempLength > width) {
+						width = tempLength;
+					}
+					board.append(line).append('\n');
+				}
+				return board.toString();
 	}
 
 	private void aStar() throws IOException {
@@ -61,21 +61,20 @@ public class Solver {
 		PriorityQueue<Board> queue = new PriorityQueue<Board>();
 		int examined = 0;
 		visited = new HashSet<Integer>();
-		queue.add(initialBoard);
+		//queue.add(initialBoard);
 		
-//		for(int i = 0; i < initialBoard.boxes.size(); i++) {
-//			Board newBoard = boardWithBfsPath(initialBoard.player, initialBoard.boxes.get(i), initialBoard);
-//			newBoard.print();
-//			queue.add(newBoard);
-//		}
+		for(int i = 0; i < initialBoard.boxes.size(); i++) {
+			Board newBoard = boardWithBfsPath(initialBoard.player, initialBoard.boxes.get(i), initialBoard);
+			queue.add(newBoard);
+		}
 		
 		while(!queue.isEmpty()) {
 			Board oldBoard = queue.poll();
 			examined++;
-			oldBoard.print();
+//			oldBoard.print();
 			if(oldBoard.isWin()) {
 				System.out.println(oldBoard.path);
-				System.out.println("Examined: " + examined);
+//				System.out.println("Examined: " + examined);
 				break;
 			}
 
