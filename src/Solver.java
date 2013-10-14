@@ -22,7 +22,9 @@ public class Solver {
 
 	private String readBoard() throws IOException {
 
-		BufferedReader br = new BufferedReader(new FileReader(new File("test000.in")));
+		//BufferedReader br = new BufferedReader(new FileReader(new File("test000.in")));
+
+		BufferedReader br = new BufferedReader(new FileReader(new File("src/test000.in")));
 
 		String line;
 		StringBuilder board = new StringBuilder();
