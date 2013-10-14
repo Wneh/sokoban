@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+import java.util.HashSet;
 
 public class Board implements Comparable<Board> {
 	static Direction UP = Direction.UP;
@@ -11,15 +12,19 @@ public class Board implements Comparable<Board> {
 	int width;
 	int height;
 	int numberOfFreeBoxes;
+	int boxesOnGoal;
 	int accumulatedCost;
 	StringBuilder path;
 	ArrayList<Node> boxes;
 	ArrayList<Node> goals;
+	public int f, g; // Total and accumulated cost
 
 	public Board(String board, int width, int height) {
+
 		nodes = new Node[height][width];
 		path = new StringBuilder();
 		boxes = new ArrayList<Node>();
+		
 		goals = new ArrayList<Node>();
 		deadlocks = new boolean[width*height];
 		this.width = width;
@@ -29,21 +34,27 @@ public class Board implements Comparable<Board> {
 		String[] rows = board.split("\n");
 
 		for(int i = 0; i < height; i++) {
-			for(int j = 0; j < width; j++) { // assume that there are trailing white spaces
+			for(int j = 0; j < rows[i].length(); j++) { // assume that there are trailing white spaces
 				type = rows[i].charAt(j);
 				nodes[i][j] = new Node(type, i, j);
-				
+
 				if(type == '$') {
 					boxes.add(nodes[i][j]);
 					numberOfFreeBoxes++;
-				} else if(type == '@') {
+				} else if(type == '@' || type == '+') {
 					player = nodes[i][j];
 				} else if(type == '.') {
 					goals.add(nodes[i][j]);
 				}
 			}
+			for(int j = rows[i].length(); j < width; j++){
+				nodes[i][j] = new Node(' ', i, j);
+			}
 		}
-		
+
+		/**
+		 * Check for deadlocks
+		 */
 		for(int i = 0; i < height; i++) {
 			for(int j = 0; j < width; j++) {
 				if(i == 0 || i == height-1 || j == 0 || j == width-1 ) // need to check this to not look for deadlocks outside the map
@@ -71,7 +82,31 @@ public class Board implements Comparable<Board> {
 		this.accumulatedCost = oldBoard.accumulatedCost;
 		copyOldBoard(oldBoard);
 		move(dir); // make one of the valid moves
-		calculateHeuristic();
+	}
+
+	// For BFS
+	public Board(Board oldBoard, Node newPlayer, String path) {
+		this.nodes = new Node[oldBoard.getHeight()][oldBoard.getWidth()];
+		this.numberOfFreeBoxes = oldBoard.numberOfFreeBoxes;
+		this.width = oldBoard.getWidth();
+		this.height = oldBoard.getHeight();
+		this.boxes = new ArrayList<Node>(oldBoard.boxes);
+		this.goals = new ArrayList<Node>(oldBoard.goals);
+		this.path = new StringBuilder(path);
+		this.accumulatedCost = oldBoard.accumulatedCost;
+		copyOldBoard(oldBoard);
+		if(!path.isEmpty()) {
+			if(oldBoard.player.symbol == Symbol.PLAYERGOAL) {
+				this.nodes[oldBoard.player.row][oldBoard.player.col].symbol = Symbol.GOAL;
+			} else {
+				this.nodes[oldBoard.player.row][oldBoard.player.col].symbol = Symbol.FREE;
+			}
+			if(newPlayer.symbol == Symbol.GOAL)
+				this.nodes[newPlayer.row][newPlayer.col].symbol = Symbol.PLAYERGOAL;
+			else
+				this.nodes[newPlayer.row][newPlayer.col].symbol = Symbol.PLAYER;
+		}
+		this.player = newPlayer;
 	}
 
 	private void copyOldBoard(Board oldBoard) {
@@ -110,8 +145,16 @@ public class Board implements Comparable<Board> {
 		} else if(at(newPos) == Symbol.BOX || at(newPos) == Symbol.BOXGOAL) { // if the new position is a box or a boxgoal.
 			Node nextBoxPos = to(newPos, dir); // the position to which we are trying to move a box
 			if(at(nextBoxPos) == Symbol.FREE) { // if the position is free then the box can be moved there
-				if(playerPos.symbol == Symbol.PLAYERGOAL) // if the player was standing on goal
+				
+				for(int i = 0; i < boxes.size(); i++) {
+					if(boxes.get(i).equals(newPos)) {
+						boxes.remove(i);
+					}
+				}
+				
+				if(playerPos.symbol == Symbol.PLAYERGOAL) { // if the player was standing on goal
 					playerPos.symbol = Symbol.GOAL; // then the position will be a goal again
+				}
 				else if(playerPos.symbol == Symbol.PLAYER) { // if it is just the player
 					playerPos.symbol = Symbol.FREE; // then the position will be free again.
 				}
@@ -121,9 +164,17 @@ public class Board implements Comparable<Board> {
 				} else {
 					newPos.symbol = Symbol.PLAYER; // else the player will stand by itself.
 				}
+				boxes.add(nextBoxPos);
 				nextBoxPos.symbol = Symbol.BOX; // the new box position is a box
 				setPlayer(newPos); // set player's new row and col index.
 			} else if(at(nextBoxPos) == Symbol.GOAL) { // if the position is goal then the box can be moved there, but will be on a goal
+				
+				for(int i = 0; i < boxes.size(); i++) {
+					if(boxes.get(i).equals(newPos)) {
+						boxes.remove(i);
+					}
+				}
+				
 				if(playerPos.symbol == Symbol.PLAYERGOAL) // // if the player was standing on goal
 					playerPos.symbol = Symbol.GOAL; // then the position will be a goal again
 				else if(playerPos.symbol == Symbol.PLAYER) { // if it is just the player
@@ -135,6 +186,7 @@ public class Board implements Comparable<Board> {
 					newPos.symbol = Symbol.PLAYER; // else the player will stand by itself.
 					numberOfFreeBoxes--;
 				}
+				boxes.add(nextBoxPos);
 				nextBoxPos.symbol = Symbol.BOXGOAL;// the new box position is a box ON GOAL
 				setPlayer(newPos); // set player's new row and col index.
 			}
@@ -168,7 +220,7 @@ public class Board implements Comparable<Board> {
 	private Symbol at(Node n) {
 		return n.getSymbol();
 	}
-	
+
 	private Symbol at(Node n, Direction dir) {
 		switch(dir) {
 		case UP:
@@ -199,24 +251,32 @@ public class Board implements Comparable<Board> {
 		}
 	}
 
-	public void calculateHeuristic() {
+	public int calculateHeuristic() {
 		int h = 0;
 		for(int i = 0; i < boxes.size(); i++) {
-			h += Math.abs(player.row - boxes.get(i).row) + Math.abs(player.col - boxes.get(i).col);
+			if(at(boxes.get(i)) == Symbol.BOX)
+				h += Math.abs(player.row - boxes.get(i).row) + Math.abs(player.col - boxes.get(i).col);
+			if(at(boxes.get(i)) == Symbol.BOXGOAL)
+				h-=6;
 		}
-		
+
 		for(int i = 0; i < boxes.size(); i++) {
+			//System.out.println(boxes.get(i).row +" " + boxes.get(i).col);
 			for(int j = 0; j < goals.size(); j++) {
-				h += Math.abs(goals.get(j).row - boxes.get(i).row) + Math.abs(goals.get(j).col - boxes.get(i).col);	
+				if(at(boxes.get(i)) == Symbol.BOX)
+					h += (Math.abs(goals.get(j).row - boxes.get(i).row) + Math.abs(goals.get(j).col - boxes.get(i).col));
+				if(at(boxes.get(i)) == Symbol.BOXGOAL)
+					h-= 6;
 			}
 		}
-		accumulatedCost += h;
+
+		return h;
 	}
-	
+
 	public boolean isWin() {
 		return numberOfFreeBoxes == 0;
 	}
-	
+
 	public Node getPlayer() {
 		return player;
 	}
@@ -232,7 +292,7 @@ public class Board implements Comparable<Board> {
 	public int getHeight() {
 		return height;
 	}
-	
+
 	public void print() {
 		for(int i = 0; i < nodes.length; i++) {
 			for(int j= 0; j < nodes[i].length; j++) {
@@ -241,18 +301,18 @@ public class Board implements Comparable<Board> {
 			System.out.println();
 		}
 	}
-	
+
 	@Override
 	public int hashCode() {
 		int h = 0;
 		for(int i = 0; i < height; i++) {
 			for(int j = 0; j < width; j++) {
-				h ^= ( h << 3 ) + ( h >> 6 ) + nodes[i][j].toChar();
+				h ^= ( h << 5 ) + ( h >> 2 ) + nodes[i][j].toChar();
 			}
 		}
 		return h;
 	}
-	
+
 	@Override
 	public int compareTo(Board otherBoard) {
 		return this.accumulatedCost - otherBoard.accumulatedCost;
