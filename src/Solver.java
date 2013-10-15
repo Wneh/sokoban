@@ -11,6 +11,8 @@ import java.util.Queue;
 
 
 public class Solver {
+	
+	private final boolean DEBUGG = true;
 
 	int width = 0;
 	int height = 0;
@@ -21,7 +23,7 @@ public class Solver {
 	}
 
 	private String readBoard() throws IOException {
-
+		if(DEBUGG){
 		BufferedReader br = new BufferedReader(new FileReader(new File("src/test000.in")));
 
 		String line;
@@ -35,20 +37,22 @@ public class Solver {
 			board.append(line).append('\n');
 		}
 		return board.toString();
-//				BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-//				
-//				String line;
-//				StringBuilder board = new StringBuilder();
-//				while(br.ready()) {
-//					line = br.readLine();
-//					height++;
-//					int tempLength = line.length();
-//					if(tempLength > width) {
-//						width = tempLength;
-//					}
-//					board.append(line).append('\n');
-//				}
-//				return board.toString();
+		} else {
+				BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+				
+				String line;
+				StringBuilder board = new StringBuilder();
+				while(br.ready()) {
+					line = br.readLine();
+					height++;
+					int tempLength = line.length();
+					if(tempLength > width) {
+						width = tempLength;
+					}
+					board.append(line).append('\n');
+				}
+				return board.toString();
+		}
 	}
 
 	private void aStar() throws IOException {
@@ -74,14 +78,14 @@ public class Solver {
 					nextOldBoard = nextOldBoard.prevBoard;
 				}
 				System.out.println(sb.toString());
-				//System.out.println("Examined: " + examined);
+				if(DEBUGG)System.out.println("Examined: " + examined);
 				break;
 			}
 
 			for(Board board : oldBoard.getPossibleStates()) {
 				if(visited(board))
 					continue;
-				board.accumulatedCost -= 13;
+				board.accumulatedCost = 00000000;
 				board.accumulatedCost += board.calculateHeuristic();
 				queue.add(board);
 			}

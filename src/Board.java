@@ -2,6 +2,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Queue;
+import java.util.Random;
 
 public class Board implements Comparable<Board> {
 	static Direction UP = Direction.UP;
@@ -45,7 +46,7 @@ public class Board implements Comparable<Board> {
 				if(type == '$' || type == '*') {
 					boxes.add(nodes[i][j]);
 					if(type == '$')
-					numberOfFreeBoxes++;
+						numberOfFreeBoxes++;
 				} else if(type == '@' || type == '+') {
 					player = nodes[i][j];
 				} else if(type == '.') {
@@ -164,7 +165,7 @@ public class Board implements Comparable<Board> {
 		//doStuff(newPlayerPos,player,to(newPlayerPos,dir));
 		this.prevBoard = oldBoard;
 	}
-	
+
 	private void copyOldBoard(Board oldBoard) {
 		for(int i = 0; i < oldBoard.height; i++) {
 			for(int j = 0; j < oldBoard.width; j++) {
@@ -178,13 +179,13 @@ public class Board implements Comparable<Board> {
 	public Node newNode(Board oldBoard, int i, int j) {
 		return new Node(oldBoard.getnodes()[i][j].toChar(), oldBoard.getnodes()[i][j].row, oldBoard.getnodes()[i][j].col);
 	}
-	
+
 	public void moveBox(Node current, Direction dir){
 		Node currentBox = nodeAt(current);
 		Node nextBox = to(currentBox,dir);
-		
+
 		Node currentPlayer = nodeAt(this.player);
-		
+
 		//Start by removing the old player
 		if(currentPlayer.symbol == Symbol.PLAYER){
 			currentPlayer.symbol = Symbol.FREE;
@@ -195,7 +196,7 @@ public class Board implements Comparable<Board> {
 		else{
 			System.out.println("-----------FUCK UP FROM REMOVING OLD PLAYER");
 		}
-		
+
 		//Move the box the new location
 		if(nextBox.symbol == Symbol.FREE){
 			nextBox.symbol = Symbol.BOX;
@@ -207,7 +208,7 @@ public class Board implements Comparable<Board> {
 		else{
 			System.out.println("-----------FUCKED UP FROM MOVING THE BOX");
 		}
-		
+
 		//Remove the old box from the box list
 		for(Node box : boxes){
 			if(box.equals(currentBox)){
@@ -215,7 +216,7 @@ public class Board implements Comparable<Board> {
 				break;
 			}
 		}
-		
+
 		//Set the new player position to the old box position
 		if(currentBox.symbol == Symbol.BOX){
 			currentBox.symbol = Symbol.PLAYER;
@@ -246,17 +247,90 @@ public class Board implements Comparable<Board> {
 				Node nextBoxPosition  = to(box, dir);
 				if(!deadlocks[nextBoxPosition.row][nextBoxPosition.col]){
 					if(nextBoxPosition.symbol == Symbol.FREE || nextBoxPosition.symbol == Symbol.GOAL || nextBoxPosition.symbol == Symbol.PLAYER || nextBoxPosition.symbol == Symbol.PLAYERGOAL){
-						//It was not a deadlock for this push
-						//and the location was okey to push
-						Node pushLocation = to(box, Direction.negDir(dir));
-						String walk = getPlayerWalk(player, pushLocation, nodes);
-						//If the walk is not null we know the player can get to the required location to make the push
-						if(walk != null){
-							//Create a new Board with the box moved
-							moves.add(new Board(this,box,dir,walk+Direction.getString(dir)));
+						//						It was not a deadlock for this push
+						//						and the location was okey to push
+						if(dir == RIGHT){
+							boolean downRight = (at(nextBoxPosition,DOWN) == Symbol.BOX && (at(nextBoxPosition,RIGHT) == Symbol.WALL) && (at(to(nextBoxPosition,DOWN),RIGHT) == Symbol.WALL));
+							boolean upRight = (at(nextBoxPosition,UP) == Symbol.BOX && (at(nextBoxPosition,RIGHT) == Symbol.WALL) && (at(to(nextBoxPosition,UP),RIGHT) == Symbol.WALL ));
+							boolean rightRightUp = (at(nextBoxPosition,RIGHT) == Symbol.BOX && at(nextBoxPosition,UP) == Symbol.WALL && at(to(nextBoxPosition, RIGHT), UP) == Symbol.WALL);
+							boolean rightRightDown = (at(nextBoxPosition,RIGHT) == Symbol.BOX && at(nextBoxPosition,DOWN) == Symbol.WALL && at(to(nextBoxPosition, RIGHT), DOWN) == Symbol.WALL);
+							if(!(downRight || upRight || rightRightUp || rightRightDown)){
+								boolean cornerRightUP = (at(nextBoxPosition,RIGHT) == Symbol.WALL && deadlocks[nextBoxPosition.row-1][nextBoxPosition.col] && at(to(nextBoxPosition,LEFT),UP) == Symbol.BOX && at(to(to(nextBoxPosition,LEFT),UP),UP) == Symbol.WALL);
+								boolean cornerRightDown = (at(nextBoxPosition,RIGHT) == Symbol.WALL && deadlocks[nextBoxPosition.row+1][nextBoxPosition.col] && at(to(nextBoxPosition,LEFT),DOWN) == Symbol.BOX && at(to(to(nextBoxPosition,LEFT),DOWN),DOWN) == Symbol.WALL);
+								if(!(cornerRightDown || cornerRightUP)){
+									Node pushLocation = to(box, Direction.negDir(dir));
+									String walk = getPlayerWalk(player, pushLocation, nodes);
+									//If the walk is not null we know the player can get to the required location to make the push
+									if(walk != null){
+										//Create a new Board with the box moved
+										moves.add(new Board(this,box,dir,walk+Direction.getString(dir)));
+									} else {
+										//Do nothing since it's not valid path push
+									}
+								}
+							}
+						} else if (dir == LEFT){
+							boolean downLeft =  (at(nextBoxPosition,DOWN) == Symbol.BOX && (at(nextBoxPosition,LEFT) == Symbol.WALL) && (at(to(nextBoxPosition,DOWN),LEFT) == Symbol.WALL ));
+							boolean upLeft = (at(nextBoxPosition,UP) == Symbol.BOX && (at(nextBoxPosition,LEFT) == Symbol.WALL) && (at(to(nextBoxPosition,UP),LEFT) == Symbol.WALL ));
+							boolean leftLeftUp = (at(nextBoxPosition,LEFT) == Symbol.BOX && at(nextBoxPosition,UP) == Symbol.WALL && at(to(nextBoxPosition, LEFT), UP) == Symbol.WALL);
+							boolean leftLeftDown = (at(nextBoxPosition,LEFT) == Symbol.BOX && at(nextBoxPosition,DOWN) == Symbol.WALL && at(to(nextBoxPosition, LEFT), DOWN) == Symbol.WALL);
+							if(!(downLeft || upLeft || leftLeftUp || leftLeftDown)){
+								boolean cornerLeftUP = (at(nextBoxPosition,LEFT) == Symbol.WALL && deadlocks[nextBoxPosition.row-1][nextBoxPosition.col] && at(to(nextBoxPosition,RIGHT),UP) == Symbol.BOX && at(to(to(nextBoxPosition,RIGHT),UP),UP) == Symbol.WALL);
+								boolean cornerLeftDown = (at(nextBoxPosition,LEFT) == Symbol.WALL && deadlocks[nextBoxPosition.row+1][nextBoxPosition.col] && at(to(nextBoxPosition,RIGHT),DOWN) == Symbol.BOX && at(to(to(nextBoxPosition,RIGHT),DOWN),DOWN) == Symbol.WALL);
+								if(!(cornerLeftDown || cornerLeftUP)){
+									Node pushLocation = to(box, Direction.negDir(dir));
+									String walk = getPlayerWalk(player, pushLocation, nodes);
+									//If the walk is not null we know the player can get to the required location to make the push
+									if(walk != null){
+										//Create a new Board with the box moved
+										moves.add(new Board(this,box,dir,walk+Direction.getString(dir)));
+									} else {
+										//Do nothing since it's not valid path push
+									}
+								}
+							}
+						} else if(dir == UP){
+							boolean rightUp = (at(nextBoxPosition,RIGHT) == Symbol.BOX && (at(nextBoxPosition,UP) == Symbol.WALL) && (at(to(nextBoxPosition,RIGHT),UP) == Symbol.WALL ));
+							boolean leftUp = (at(nextBoxPosition,LEFT) == Symbol.BOX && (at(nextBoxPosition,UP) == Symbol.WALL) && (at(to(nextBoxPosition,LEFT),UP) == Symbol.WALL ));
+							boolean upUpRight = (at(nextBoxPosition,UP) == Symbol.BOX && at(nextBoxPosition,RIGHT) == Symbol.WALL && at(to(nextBoxPosition, UP), RIGHT) == Symbol.WALL);
+							boolean upUpLeft = (at(nextBoxPosition,UP) == Symbol.BOX && at(nextBoxPosition,LEFT) == Symbol.WALL && at(to(nextBoxPosition, UP), LEFT) == Symbol.WALL);
+							if( !(rightUp || leftUp || upUpRight || upUpLeft) ){
+								boolean cornerUpLeft = (at(nextBoxPosition,UP) == Symbol.WALL && deadlocks[nextBoxPosition.row][nextBoxPosition.col-1] && at(to(nextBoxPosition,DOWN),LEFT) == Symbol.BOX && at(to(to(nextBoxPosition,DOWN),LEFT),LEFT) == Symbol.WALL);
+								boolean cornerUpRight = (at(nextBoxPosition,UP) == Symbol.WALL && deadlocks[nextBoxPosition.row][nextBoxPosition.col+1] && at(to(nextBoxPosition,DOWN),RIGHT) == Symbol.BOX && at(to(to(nextBoxPosition,DOWN),RIGHT),RIGHT) == Symbol.WALL);
+								if(!(cornerUpLeft || cornerUpRight)){
+									Node pushLocation = to(box, Direction.negDir(dir));
+									String walk = getPlayerWalk(player, pushLocation, nodes);
+									//If the walk is not null we know the player can get to the required location to make the push
+									if(walk != null){
+										//Create a new Board with the box moved
+										moves.add(new Board(this,box,dir,walk+Direction.getString(dir)));
+									} else {
+										//Do nothing since it's not valid path push
+									}
+								}
+							}
 						} else {
-							//Do nothing since it's not valid path push
+							boolean rightDown = (at(nextBoxPosition,RIGHT) == Symbol.BOX && (at(nextBoxPosition,DOWN) == Symbol.WALL ) && (at(to(nextBoxPosition,RIGHT),DOWN) == Symbol.WALL));
+							boolean leftDown = (at(nextBoxPosition,LEFT) == Symbol.BOX && (at(nextBoxPosition,DOWN) == Symbol.WALL ) && (at(to(nextBoxPosition,LEFT),DOWN) == Symbol.WALL ));
+							boolean downDownRight = (at(nextBoxPosition,DOWN) == Symbol.BOX && at(nextBoxPosition,RIGHT) == Symbol.WALL && at(to(nextBoxPosition, DOWN), RIGHT) == Symbol.WALL);
+							boolean downDownLeft = (at(nextBoxPosition,DOWN) == Symbol.BOX && at(nextBoxPosition,LEFT) == Symbol.WALL && at(to(nextBoxPosition, DOWN), LEFT) == Symbol.WALL);
+							if( !(rightDown || leftDown || downDownLeft || downDownRight) ){
+								boolean cornerDownLeft = (at(nextBoxPosition,DOWN) == Symbol.WALL && deadlocks[nextBoxPosition.row][nextBoxPosition.col-1] && at(to(nextBoxPosition,UP),LEFT) == Symbol.BOX && at(to(to(nextBoxPosition,UP),LEFT),LEFT) == Symbol.WALL);
+								boolean cornerDownRight = (at(nextBoxPosition,DOWN) == Symbol.WALL && deadlocks[nextBoxPosition.row][nextBoxPosition.col+1] && at(to(nextBoxPosition,UP),RIGHT) == Symbol.BOX && at(to(to(nextBoxPosition,UP),RIGHT),RIGHT) == Symbol.WALL);
+								if(!(cornerDownLeft || cornerDownRight)){
+									Node pushLocation = to(box, Direction.negDir(dir));
+									String walk = getPlayerWalk(player, pushLocation, nodes);
+									//If the walk is not null we know the player can get to the required location to make the push
+									if(walk != null){
+										//Create a new Board with the box moved
+										moves.add(new Board(this,box,dir,walk+Direction.getString(dir)));
+									} else {
+										//Do nothing since it's not valid path push
+									}
+								}
+							}
 						}
+
 					}
 				}
 			}
@@ -297,15 +371,15 @@ public class Board implements Comparable<Board> {
 			return nodes[n.row][n.col+1];
 		}
 	}
-	
+
 	public int calculateHeuristic() {
 		int h = 0;
-//		for(int i = 0; i < boxes.size(); i++) {
-//			if(at(boxes.get(i)) == Symbol.BOX)
-//				h += Math.abs(player.row - boxes.get(i).row) + Math.abs(player.col - boxes.get(i).col);
-//			if(at(boxes.get(i)) == Symbol.BOXGOAL)
-//				h-=6;
-//		}
+		for(int i = 0; i < boxes.size(); i++) {
+			if(at(boxes.get(i)) == Symbol.BOX)
+				h += Math.abs(player.row - boxes.get(i).row) + Math.abs(player.col - boxes.get(i).col);
+			//               if(at(boxes.get(i)) == Symbol.BOXGOAL)
+			//                       h-=6;
+		}
 
 		for(int i = 0; i < boxes.size(); i++) {
 			//System.out.println(boxes.get(i).row +" " + boxes.get(i).col);
@@ -313,7 +387,7 @@ public class Board implements Comparable<Board> {
 				if(at(boxes.get(i)) == Symbol.BOX)
 					h += (Math.abs(goals.get(j).row - boxes.get(i).row) + Math.abs(goals.get(j).col - boxes.get(i).col));
 				if(at(boxes.get(i)) == Symbol.BOXGOAL)
-					h = 0;
+					h /= 2;
 			}
 		}
 
@@ -343,11 +417,11 @@ public class Board implements Comparable<Board> {
 	public void print() {
 		for(int i = 0; i < nodes.length; i++) {
 			for(int j= 0; j < nodes[i].length; j++) {
-//							if(deadlocks[i][j]){
-//								System.out.print("¤");
-//							} else {
+				//							if(deadlocks[i][j]){
+				//								System.out.print("¤");
+				//							} else {
 				System.out.print(nodes[i][j].toChar());
-//							}
+				//							}
 			}
 			System.out.println();
 		}
