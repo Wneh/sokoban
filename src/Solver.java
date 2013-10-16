@@ -68,24 +68,30 @@ public class Solver {
 		while(!queue.isEmpty()) {
 			Board oldBoard = queue.poll();
 			examined++;
-//			oldBoard.print();
+			//System.err.println("Queue size: " + queue.size());
+			//oldBoard.print();
 			if(oldBoard.isWin()) {
 				StringBuilder sb = new StringBuilder();
-				sb.insert(0, oldBoard.walkPath);
+				sb.append(oldBoard.getPlayerWalk());
 				Board nextOldBoard = oldBoard.prevBoard;
 				while(nextOldBoard.prevBoard != null){
-					sb.insert(0, nextOldBoard.walkPath);
+					sb.append(nextOldBoard.getPlayerWalk());
 					nextOldBoard = nextOldBoard.prevBoard;
 				}
-				System.out.println(sb.toString());
-				if(DEBUGG)System.out.println("Examined: " + examined);
+				System.out.println(sb.reverse().toString());
+				
+				if(DEBUGG){
+					System.out.println("Examined: " + examined);
+					System.out.println("Queue size: " + queue.size());
+				}
 				break;
 			}
 
 			for(Board board : oldBoard.getPossibleStates()) {
-				if(visited(board))
+				if(visited(board)){
 					continue;
-				board.accumulatedCost = 00000000;
+				}
+			//	board.accumulatedCost = 00000000;
 				board.accumulatedCost += board.calculateHeuristic();
 				queue.add(board);
 			}

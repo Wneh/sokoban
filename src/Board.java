@@ -17,17 +17,20 @@ public class Board implements Comparable<Board> {
 	int numberOfFreeBoxes;
 	int boxesOnGoal;
 	int accumulatedCost;
-	StringBuilder path;
+//	StringBuilder path;
 	ArrayList<Node> boxes;
 	ArrayList<Node> goals;
 	public int f, g; // Total and accumulated cost
 	Board prevBoard;
-	String walkPath;
+//	String walkPath;
+	Node oldPlayerPos;
+	Node pushLocation;
+	Direction pushDir;
 
 	public Board(String board, int width, int height) {
 
 		nodes = new Node[height][width];
-		path = new StringBuilder();
+//		path = new StringBuilder();
 		boxes = new ArrayList<Node>();
 
 		goals = new ArrayList<Node>();
@@ -148,7 +151,7 @@ public class Board implements Comparable<Board> {
 
 	}
 
-	public Board(Board oldBoard, Node newPlayerPos, Direction dir,String walk) { // create a new board and move the player in a valid direction
+	public Board(Board oldBoard, Node newPlayerPos, Direction dir) { // create a new board and move the player in a valid direction
 		this.nodes = new Node[oldBoard.getHeight()][oldBoard.getWidth()];
 		this.player = new Node('@', oldBoard.player.row, oldBoard.player.col);
 		//this.player = new Node('@',newPlayerPos.row,newPlayerPos.col);
@@ -158,12 +161,19 @@ public class Board implements Comparable<Board> {
 		this.boxes = new ArrayList<Node>(oldBoard.boxes);
 		this.goals = new ArrayList<Node>(oldBoard.goals);
 		//this.path = new StringBuilder(walk);
-		this.walkPath = walk;
+//		this.walkPath = walk;
 		this.accumulatedCost = oldBoard.accumulatedCost;
 		copyOldBoard(oldBoard);
+		
+		this.oldPlayerPos = new Node('@',player.row,player.col);
+		this.pushLocation = to(newPlayerPos,Direction.negDir(dir));
+		this.pushDir = dir;
+		
+		
 		moveBox(newPlayerPos,dir); // make one of the valid moves;
 		//doStuff(newPlayerPos,player,to(newPlayerPos,dir));
 		this.prevBoard = oldBoard;
+		
 	}
 
 	private void copyOldBoard(Board oldBoard) {
@@ -238,7 +248,8 @@ public class Board implements Comparable<Board> {
 	}
 
 	public ArrayList<Board> getPossibleStates(){
-		ArrayList<Board> moves = new ArrayList<Board>();		
+		ArrayList<Board> moves = new ArrayList<Board>();	
+		boolean[][] reachables = getReachables(this.player, nodes);
 		//Grab the first box in the list that is not on a goal
 		for(Node box : boxes){
 			//Now move this box to each direction
@@ -258,15 +269,7 @@ public class Board implements Comparable<Board> {
 								boolean cornerRightUP = (at(nextBoxPosition,RIGHT) == Symbol.WALL && deadlocks[nextBoxPosition.row-1][nextBoxPosition.col] && at(to(nextBoxPosition,LEFT),UP) == Symbol.BOX && at(to(to(nextBoxPosition,LEFT),UP),UP) == Symbol.WALL);
 								boolean cornerRightDown = (at(nextBoxPosition,RIGHT) == Symbol.WALL && deadlocks[nextBoxPosition.row+1][nextBoxPosition.col] && at(to(nextBoxPosition,LEFT),DOWN) == Symbol.BOX && at(to(to(nextBoxPosition,LEFT),DOWN),DOWN) == Symbol.WALL);
 								if(!(cornerRightDown || cornerRightUP)){
-									Node pushLocation = to(box, Direction.negDir(dir));
-									String walk = getPlayerWalk(player, pushLocation, nodes);
-									//If the walk is not null we know the player can get to the required location to make the push
-									if(walk != null){
-										//Create a new Board with the box moved
-										moves.add(new Board(this,box,dir,walk+Direction.getString(dir)));
-									} else {
-										//Do nothing since it's not valid path push
-									}
+									makeNextMove(moves, box, dir,reachables);
 								}
 							}
 						} else if (dir == LEFT){
@@ -278,15 +281,7 @@ public class Board implements Comparable<Board> {
 								boolean cornerLeftUP = (at(nextBoxPosition,LEFT) == Symbol.WALL && deadlocks[nextBoxPosition.row-1][nextBoxPosition.col] && at(to(nextBoxPosition,RIGHT),UP) == Symbol.BOX && at(to(to(nextBoxPosition,RIGHT),UP),UP) == Symbol.WALL);
 								boolean cornerLeftDown = (at(nextBoxPosition,LEFT) == Symbol.WALL && deadlocks[nextBoxPosition.row+1][nextBoxPosition.col] && at(to(nextBoxPosition,RIGHT),DOWN) == Symbol.BOX && at(to(to(nextBoxPosition,RIGHT),DOWN),DOWN) == Symbol.WALL);
 								if(!(cornerLeftDown || cornerLeftUP)){
-									Node pushLocation = to(box, Direction.negDir(dir));
-									String walk = getPlayerWalk(player, pushLocation, nodes);
-									//If the walk is not null we know the player can get to the required location to make the push
-									if(walk != null){
-										//Create a new Board with the box moved
-										moves.add(new Board(this,box,dir,walk+Direction.getString(dir)));
-									} else {
-										//Do nothing since it's not valid path push
-									}
+									makeNextMove(moves, box, dir,reachables);
 								}
 							}
 						} else if(dir == UP){
@@ -298,15 +293,7 @@ public class Board implements Comparable<Board> {
 								boolean cornerUpLeft = (at(nextBoxPosition,UP) == Symbol.WALL && deadlocks[nextBoxPosition.row][nextBoxPosition.col-1] && at(to(nextBoxPosition,DOWN),LEFT) == Symbol.BOX && at(to(to(nextBoxPosition,DOWN),LEFT),LEFT) == Symbol.WALL);
 								boolean cornerUpRight = (at(nextBoxPosition,UP) == Symbol.WALL && deadlocks[nextBoxPosition.row][nextBoxPosition.col+1] && at(to(nextBoxPosition,DOWN),RIGHT) == Symbol.BOX && at(to(to(nextBoxPosition,DOWN),RIGHT),RIGHT) == Symbol.WALL);
 								if(!(cornerUpLeft || cornerUpRight)){
-									Node pushLocation = to(box, Direction.negDir(dir));
-									String walk = getPlayerWalk(player, pushLocation, nodes);
-									//If the walk is not null we know the player can get to the required location to make the push
-									if(walk != null){
-										//Create a new Board with the box moved
-										moves.add(new Board(this,box,dir,walk+Direction.getString(dir)));
-									} else {
-										//Do nothing since it's not valid path push
-									}
+									makeNextMove(moves, box, dir,reachables);
 								}
 							}
 						} else {
@@ -318,15 +305,7 @@ public class Board implements Comparable<Board> {
 								boolean cornerDownLeft = (at(nextBoxPosition,DOWN) == Symbol.WALL && deadlocks[nextBoxPosition.row][nextBoxPosition.col-1] && at(to(nextBoxPosition,UP),LEFT) == Symbol.BOX && at(to(to(nextBoxPosition,UP),LEFT),LEFT) == Symbol.WALL);
 								boolean cornerDownRight = (at(nextBoxPosition,DOWN) == Symbol.WALL && deadlocks[nextBoxPosition.row][nextBoxPosition.col+1] && at(to(nextBoxPosition,UP),RIGHT) == Symbol.BOX && at(to(to(nextBoxPosition,UP),RIGHT),RIGHT) == Symbol.WALL);
 								if(!(cornerDownLeft || cornerDownRight)){
-									Node pushLocation = to(box, Direction.negDir(dir));
-									String walk = getPlayerWalk(player, pushLocation, nodes);
-									//If the walk is not null we know the player can get to the required location to make the push
-									if(walk != null){
-										//Create a new Board with the box moved
-										moves.add(new Board(this,box,dir,walk+Direction.getString(dir)));
-									} else {
-										//Do nothing since it's not valid path push
-									}
+									makeNextMove(moves, box, dir,reachables);
 								}
 							}
 						}
@@ -336,6 +315,22 @@ public class Board implements Comparable<Board> {
 			}
 		}
 		return moves;
+	}
+
+	private void makeNextMove(ArrayList<Board> moves, Node box, Direction dir,boolean[][] reachables) {
+		Node pushLocation = to(box, Direction.negDir(dir));
+		//String walk = getPlayerWalk(player, pushLocation, nodes);
+		//If the walk is not null we know the player can get to the required location to make the push
+		if(reachables[pushLocation.row][pushLocation.col]){
+			
+//			System.out.println("Box: " + box);
+//			System.out.println("Next: " + pushLocation);
+//			print();
+			//Create a new Board with the box moved
+			moves.add(new Board(this,box,dir));
+		} else {
+			//Do nothing since it's not valid path push
+		}
 	}
 
 	private Symbol at(Node n) {
@@ -374,23 +369,28 @@ public class Board implements Comparable<Board> {
 
 	public int calculateHeuristic() {
 		int h = 0;
-		for(int i = 0; i < boxes.size(); i++) {
-			if(at(boxes.get(i)) == Symbol.BOX)
-				h += Math.abs(player.row - boxes.get(i).row) + Math.abs(player.col - boxes.get(i).col);
-			//               if(at(boxes.get(i)) == Symbol.BOXGOAL)
-			//                       h-=6;
-		}
-
-		for(int i = 0; i < boxes.size(); i++) {
-			//System.out.println(boxes.get(i).row +" " + boxes.get(i).col);
-			for(int j = 0; j < goals.size(); j++) {
-				if(at(boxes.get(i)) == Symbol.BOX)
-					h += (Math.abs(goals.get(j).row - boxes.get(i).row) + Math.abs(goals.get(j).col - boxes.get(i).col));
-				if(at(boxes.get(i)) == Symbol.BOXGOAL)
-					h /= 2;
+		String path = "";
+		//For each box
+		for(Node box : boxes){
+			//Check so the box is not already on a goal 
+			if(box.symbol != Symbol.BOXGOAL){
+				//If not then do a bfs to and get the distance the closest goal
+				path = getClosestGoal(box, this.nodes); 
+				if(path != null){
+					//Add the lenght of the path to the herustic value
+					h += path.length();
+				}
+				else {
+					//We didnt find a path to a goal for a box so add a big value
+					//since this is not a good thing
+					h += 20;
+				}
+				
+			}
+			else{
+				h -= 40;
 			}
 		}
-
 		return h;
 	}
 
@@ -452,7 +452,43 @@ public class Board implements Comparable<Board> {
 		return this.accumulatedCost - otherBoard.accumulatedCost;
 	}
 
-	public String getPlayerWalk(Node start, Node stop, Node[][] map) {
+	public boolean[][] getReachables(Node start,Node[][] map) {
+
+		//Init stuff
+		//StringBuilder sb = new StringBuilder();
+		Queue<Node> q = new LinkedList<Node>();
+		boolean[][] visited = new boolean[map.length][map[0].length];
+		//Add the start
+		//start.setDir("");
+		q.add(start);
+
+		Node currentNode;
+
+		while(!q.isEmpty()) {
+			//Take out one element
+			currentNode = q.poll();
+
+			//Go over each direction from this node
+			Node nextNode;
+			for(Direction dir : Direction.values()){
+				nextNode = to(currentNode, dir);
+				//Check if we have been here already
+				if(!visited[nextNode.row][nextNode.col]){
+					//Check if we can go here
+					if(nextNode.symbol == Symbol.FREE || nextNode.symbol == Symbol.GOAL || nextNode.symbol == Symbol.PLAYER || nextNode.symbol == Symbol.PLAYERGOAL){
+						//nextNode.setPrevNode(currentNode);
+						//nextNode.setDir(Direction.getString(dir));
+						q.add(nextNode);
+						visited[nextNode.row][nextNode.col] = true;
+					}
+				}
+			}
+		}
+		//We didn't find a path so send back null to signal that
+		return visited;
+	}
+	
+	public String getClosestGoal(Node start, Node[][] map) {
 
 		//Init stuff
 		StringBuilder sb = new StringBuilder();
@@ -468,7 +504,7 @@ public class Board implements Comparable<Board> {
 			//Take out one element
 			currentNode = q.poll();
 			//Check if it goal
-			if(currentNode.equals(stop)) {
+			if(currentNode.symbol == Symbol.GOAL) {
 				//We found the goal
 				sb.append(currentNode.getDir());
 				//Start backtracking
@@ -500,5 +536,73 @@ public class Board implements Comparable<Board> {
 		}
 		//We didn't find a path so send back null to signal that
 		return null;
+	}
+	
+	public String getPlayerWalk() { 
+
+		Node start = this.prevBoard.player; 
+		Node stop = this.pushLocation;
+		Node[][] map = this.prevBoard.nodes;
+
+		this.prevBoard.print();
+		System.out.println("Old player pos: " + start);
+		System.out.println("Stop: " + stop);
+		
+		//Init stuff
+		StringBuilder sb = new StringBuilder();
+		Queue<Node> q = new LinkedList<Node>();
+		boolean[][] visited = new boolean[map.length][map[0].length];
+		//Add the start
+		start.setDir("");
+		q.add(start);
+
+		Node currentNode;
+		
+		sb.append(Direction.getString(pushDir));
+
+		while(!q.isEmpty()) {
+			//Take out one element
+			currentNode = q.poll();
+			//Check if it goal
+			if(currentNode.equals(stop)) {
+				//We found the goal
+				sb.append(currentNode.getDir());
+				//Start backtracking
+				Node tempNode = currentNode.getProvNode();
+				if(tempNode != null){
+					while(!tempNode.equals(start)){
+						sb.append(tempNode.getDir());
+						tempNode = tempNode.getProvNode();
+					}
+				}
+				//sb.reverse();
+				
+//				System.out.println("sub - Path: " + sb.toString());
+				//System.out.println("");
+				return sb.toString();
+			}
+
+			//Go over each direction from this node
+			Node nextNode;
+			for(Direction dir : Direction.values()){
+				nextNode = to(currentNode, dir);
+				//Check if we have been here already
+				if(!visited[nextNode.row][nextNode.col]){
+					//Check if we can go here
+					if(nextNode.symbol == Symbol.FREE || nextNode.symbol == Symbol.GOAL || nextNode.symbol == Symbol.PLAYER || nextNode.symbol == Symbol.PLAYERGOAL){
+						nextNode.setPrevNode(currentNode);
+						nextNode.setDir(Direction.getString(dir));
+						q.add(nextNode);
+						visited[nextNode.row][nextNode.col] = true;
+					}
+				}
+			}
+		}
+		System.out.println("TOLO");
+		prevBoard.print();
+		System.out.println("Start: " + start);
+		System.out.println("Stop: " + stop);
+		//We didn't find a path so send back null to signal that
+		return "";
 	}
 }

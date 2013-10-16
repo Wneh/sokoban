@@ -31,7 +31,7 @@ public class Node {
 	public void setDir(String dir){
 		this.dir = dir;
 	}
-	
+
 	public void setPrevNode(Node prev){
 		this.prevNode = prev;
 	}
