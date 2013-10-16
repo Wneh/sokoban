@@ -11,8 +11,8 @@ import java.util.Queue;
 
 
 public class Solver {
-	
-	private final boolean DEBUGG = true;
+
+	private final boolean DEBUGG = false;
 
 	int width = 0;
 	int height = 0;
@@ -25,34 +25,34 @@ public class Solver {
 
 	private String readBoard() throws IOException {
 		if(DEBUGG){
-		BufferedReader br = new BufferedReader(new FileReader(new File("src/test000.in")));
+			BufferedReader br = new BufferedReader(new FileReader(new File("src/test012.in")));
 
-		String line;
-		StringBuilder board = new StringBuilder();
-		while((line = br.readLine()) != null) {
-			height++;
-			int tempLength = line.length();
-			if(tempLength > width) {
-				width = tempLength;
-			}
-			board.append(line).append('\n');
-		}
-		return board.toString();
-		} else {
-				BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-				
-				String line;
-				StringBuilder board = new StringBuilder();
-				while(br.ready()) {
-					line = br.readLine();
-					height++;
-					int tempLength = line.length();
-					if(tempLength > width) {
-						width = tempLength;
-					}
-					board.append(line).append('\n');
+			String line;
+			StringBuilder board = new StringBuilder();
+			while((line = br.readLine()) != null) {
+				height++;
+				int tempLength = line.length();
+				if(tempLength > width) {
+					width = tempLength;
 				}
-				return board.toString();
+				board.append(line).append('\n');
+			}
+			return board.toString();
+		} else {
+			BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+
+			String line;
+			StringBuilder board = new StringBuilder();
+			while(br.ready()) {
+				line = br.readLine();
+				height++;
+				int tempLength = line.length();
+				if(tempLength > width) {
+					width = tempLength;
+				}
+				board.append(line).append('\n');
+			}
+			return board.toString();
 		}
 	}
 
@@ -60,54 +60,55 @@ public class Solver {
 		String initboard = readBoard();
 
 		Board initialBoard = new Board(initboard, width, height);
-		
+
 		generateDistanceMap(initialBoard.nodes);
-		initialBoard.printDeadlock();
+//				initialBoard.printDeadlock();
+
 		initialBoard.accumulatedCost = initialBoard.calculateHeuristic(distanceMap);
 		PriorityQueue<Board> queue = new PriorityQueue<Board>();
 		int examined = 0;
 		visited = new HashSet<Integer>();
 		queue.add(initialBoard);
-		
+
 		while(!queue.isEmpty()) {
 			Board oldBoard = queue.poll();
 			examined++;
 			if(oldBoard.isWin()) {
-				
+
 				StringBuilder sb = new StringBuilder();
 				Board nextBoard = oldBoard;
 				while(nextBoard.prevBoard != null){
 					sb.insert(0, nextBoard.getPlayerWalk2());
 					nextBoard = nextBoard.prevBoard;
 				}
-				
+
 				System.out.println(sb.toString());
-				
 				if(DEBUGG){
 					System.out.println("Examined: " + examined);
 					System.out.println("Queue size: " + queue.size());
 				}
+				Runtime.getRuntime().exit(0);
 				break;
-				
+
 			}
 
 			for(Board board : oldBoard.getPossibleStates()) {
-				if(visited(board)){
+				if(visited(board)) {
 					continue;
 				}
-				board.accumulatedCost = board.calculateHeuristic(distanceMap);
+				board.accumulatedCost = (board.calculateHeuristic(distanceMap)+board.calculateHeuristic())/2;
 				queue.add(board);
 			}
 		}
 	}
-	
+
 	private void generateDistanceMap(Node[][] map){
-		
+
 		distanceMap = new int[map.length][map[0].length];
 		Queue<Node> q = new LinkedList<Node>();
 		boolean[][] visited = new boolean[map.length][map[0].length];
-		
-		//Start by adding all the goals
+
+		//Start by adding all the goals	
 		for(int i = 0; i < map.length; i++){
 			for(int j = 0; j < map[0].length; j++){
 				if(map[i][j].symbol == Symbol.BOXGOAL || map[i][j].symbol == Symbol.GOAL || map[i][j].symbol == Symbol.PLAYERGOAL){
@@ -120,7 +121,7 @@ public class Solver {
 		Node currentNode;
 		while(!q.isEmpty()){
 			currentNode = q.poll();
-			
+
 			//Up
 			x = currentNode.row-1;
 			y = currentNode.col;
@@ -129,7 +130,7 @@ public class Solver {
 				q.add(map[x][y]);
 				visited[x][y] = true; 
 			}
-			
+
 			//Down
 			x = currentNode.row+1;
 			y = currentNode.col;
@@ -138,7 +139,7 @@ public class Solver {
 				q.add(map[x][y]);
 				visited[x][y] = true;
 			}
-			
+
 			//Right
 			x = currentNode.row;
 			y = currentNode.col+1;
@@ -147,7 +148,7 @@ public class Solver {
 				q.add(map[x][y]);
 				visited[x][y] = true;
 			}
-			
+
 			//Left
 			x = currentNode.row;
 			y = currentNode.col-1;
@@ -157,14 +158,14 @@ public class Solver {
 				visited[x][y] = true;
 			}
 		}
-		
-		for(int i = 0; i < map.length; i++){
-			for(int j = 0; j < map[0].length; j++){
-				System.out.print(distanceMap[i][j] + " ");
-			}
-			System.out.println();
-		}
-		
+
+		//		for(int i = 0; i < map.length; i++){
+		//			for(int j = 0; j < map[0].length; j++){
+		//				System.out.print(distanceMap[i][j] + " ");
+		//			}
+		//			System.out.println();
+		//		}
+
 	}
 
 	private boolean visited(Board board) {

@@ -148,6 +148,71 @@ public class Board implements Comparable<Board> {
 			}
 
 		}
+		
+		for(int i = 1 ; i < height-1 ; i++){
+			for(int j = 1 ; j < width-1 ; j++){
+				if(nodes[i][j-1].symbol == Symbol.WALL && nodes[i][j+1].symbol == Symbol.WALL && (nodes[i][j].symbol == Symbol.FREE || nodes[i][j].symbol == Symbol.PLAYER)){ //Deadlocked tunnel downwards
+					int k = i;
+					boolean isDeadlock = false;
+					while(nodes[k+1][j-1].symbol == Symbol.WALL && nodes[k+1][j+1].symbol == Symbol.WALL && k != height-2){
+						if(nodes[k+1][j].symbol == Symbol.WALL){
+							isDeadlock = true;
+							break;
+						} else if(nodes[k+1][j].symbol != Symbol.FREE && nodes[k+1][j].symbol != Symbol.PLAYER){
+							break;
+						}
+						k++;
+					}
+					if(isDeadlock){
+						deadlocks[i][j] = true;
+					} else {
+						k = i;
+						while(nodes[k-1][j-1].symbol == Symbol.WALL && nodes[k-1][j+1].symbol == Symbol.WALL){
+							if(nodes[k-1][j].symbol == Symbol.WALL){
+								isDeadlock = true;
+								break;
+							} else if(nodes[k-1][j].symbol != Symbol.FREE && nodes[k-1][j].symbol != Symbol.PLAYER){
+								break;
+							}
+							k--;
+						}
+						if(isDeadlock){
+							deadlocks[i][j] = true;
+						}
+					}
+					
+				} else if(nodes[i-1][j].symbol == Symbol.WALL && nodes[i+1][j].symbol == Symbol.WALL && (nodes[i][j].symbol == Symbol.FREE || nodes[i][j].symbol == Symbol.PLAYER)){ //Deadlocked tunnel leftwards
+					int k = j;
+					boolean isDeadlock = false;
+					while(nodes[i-1][k-1].symbol == Symbol.WALL && nodes[i+1][k-1].symbol == Symbol.WALL && k != 1){
+						if(nodes[i][k-1].symbol == Symbol.WALL){
+							isDeadlock = true;
+							break;
+						} else if(nodes[i][k-1].symbol != Symbol.FREE && nodes[i][k-1].symbol != Symbol.PLAYER){
+							break;
+						}
+						k--;
+					}
+					if(isDeadlock){
+						deadlocks[i][j] = isDeadlock;
+					} else {
+						k = j;
+						while(nodes[i-1][k+1].symbol == Symbol.WALL && nodes[i+1][k+1].symbol == Symbol.WALL){
+							if(nodes[i][k+1].symbol == Symbol.WALL){
+								isDeadlock = true;
+								break;
+							} else if(nodes[i][k+1].symbol != Symbol.FREE && nodes[i][k+1].symbol != Symbol.PLAYER){
+								break;
+							}
+							k++;
+						}
+						if(isDeadlock){
+							deadlocks[i][j] = isDeadlock;
+						}
+					}
+				} 
+			}
+		}
 
 	}
 
@@ -260,53 +325,54 @@ public class Board implements Comparable<Board> {
 					if(nextBoxPosition.symbol == Symbol.FREE || nextBoxPosition.symbol == Symbol.GOAL || nextBoxPosition.symbol == Symbol.PLAYER || nextBoxPosition.symbol == Symbol.PLAYERGOAL){
 						//						It was not a deadlock for this push
 						//						and the location was okey to push
+//						makeNextMove(moves, box, dir,reachables);
 						if(dir == RIGHT){
-							boolean downRight = (at(nextBoxPosition,DOWN) == Symbol.BOX && (at(nextBoxPosition,RIGHT) == Symbol.WALL) && (at(to(nextBoxPosition,DOWN),RIGHT) == Symbol.WALL));
-							boolean upRight = (at(nextBoxPosition,UP) == Symbol.BOX && (at(nextBoxPosition,RIGHT) == Symbol.WALL) && (at(to(nextBoxPosition,UP),RIGHT) == Symbol.WALL ));
-							boolean rightRightUp = (at(nextBoxPosition,RIGHT) == Symbol.BOX && at(nextBoxPosition,UP) == Symbol.WALL && at(to(nextBoxPosition, RIGHT), UP) == Symbol.WALL);
-							boolean rightRightDown = (at(nextBoxPosition,RIGHT) == Symbol.BOX && at(nextBoxPosition,DOWN) == Symbol.WALL && at(to(nextBoxPosition, RIGHT), DOWN) == Symbol.WALL);
-							if(!(downRight || upRight || rightRightUp || rightRightDown)){
-								boolean cornerRightUP = (at(nextBoxPosition,RIGHT) == Symbol.WALL && deadlocks[nextBoxPosition.row-1][nextBoxPosition.col] && at(to(nextBoxPosition,LEFT),UP) == Symbol.BOX && at(to(to(nextBoxPosition,LEFT),UP),UP) == Symbol.WALL);
-								boolean cornerRightDown = (at(nextBoxPosition,RIGHT) == Symbol.WALL && deadlocks[nextBoxPosition.row+1][nextBoxPosition.col] && at(to(nextBoxPosition,LEFT),DOWN) == Symbol.BOX && at(to(to(nextBoxPosition,LEFT),DOWN),DOWN) == Symbol.WALL);
-								if(!(cornerRightDown || cornerRightUP)){
+							boolean downRight = !(at(nextBoxPosition,DOWN) == Symbol.BOX && (at(nextBoxPosition,RIGHT) == Symbol.WALL) && (at(to(nextBoxPosition,DOWN),RIGHT) == Symbol.WALL));
+							boolean upRight = !(at(nextBoxPosition,UP) == Symbol.BOX && (at(nextBoxPosition,RIGHT) == Symbol.WALL) && (at(to(nextBoxPosition,UP),RIGHT) == Symbol.WALL ));
+							boolean rightRightUp = !(at(nextBoxPosition,RIGHT) == Symbol.BOX && at(nextBoxPosition,UP) == Symbol.WALL && at(to(nextBoxPosition, RIGHT), UP) == Symbol.WALL);
+							boolean rightRightDown = !(at(nextBoxPosition,RIGHT) == Symbol.BOX && at(nextBoxPosition,DOWN) == Symbol.WALL && at(to(nextBoxPosition, RIGHT), DOWN) == Symbol.WALL);
+							if((downRight && upRight && rightRightUp && rightRightDown)){
+//								boolean cornerRightUP = !(at(nextBoxPosition,RIGHT) == Symbol.WALL && deadlocks[nextBoxPosition.row-1][nextBoxPosition.col] && at(to(nextBoxPosition,LEFT),UP) == Symbol.BOX && at(to(to(nextBoxPosition,LEFT),UP),UP) == Symbol.WALL);
+//								boolean cornerRightDown = !(at(nextBoxPosition,RIGHT) == Symbol.WALL && deadlocks[nextBoxPosition.row+1][nextBoxPosition.col] && at(to(nextBoxPosition,LEFT),DOWN) == Symbol.BOX && at(to(to(nextBoxPosition,LEFT),DOWN),DOWN) == Symbol.WALL);
+//								if((cornerRightDown && cornerRightUP)){
 									makeNextMove(moves, box, dir,reachables);
-								}
+//								}
 							}
 						} else if (dir == LEFT){
-							boolean downLeft =  (at(nextBoxPosition,DOWN) == Symbol.BOX && (at(nextBoxPosition,LEFT) == Symbol.WALL) && (at(to(nextBoxPosition,DOWN),LEFT) == Symbol.WALL ));
-							boolean upLeft = (at(nextBoxPosition,UP) == Symbol.BOX && (at(nextBoxPosition,LEFT) == Symbol.WALL) && (at(to(nextBoxPosition,UP),LEFT) == Symbol.WALL ));
-							boolean leftLeftUp = (at(nextBoxPosition,LEFT) == Symbol.BOX && at(nextBoxPosition,UP) == Symbol.WALL && at(to(nextBoxPosition, LEFT), UP) == Symbol.WALL);
-							boolean leftLeftDown = (at(nextBoxPosition,LEFT) == Symbol.BOX && at(nextBoxPosition,DOWN) == Symbol.WALL && at(to(nextBoxPosition, LEFT), DOWN) == Symbol.WALL);
-							if(!(downLeft || upLeft || leftLeftUp || leftLeftDown)){
-								boolean cornerLeftUP = (at(nextBoxPosition,LEFT) == Symbol.WALL && deadlocks[nextBoxPosition.row-1][nextBoxPosition.col] && at(to(nextBoxPosition,RIGHT),UP) == Symbol.BOX && at(to(to(nextBoxPosition,RIGHT),UP),UP) == Symbol.WALL);
-								boolean cornerLeftDown = (at(nextBoxPosition,LEFT) == Symbol.WALL && deadlocks[nextBoxPosition.row+1][nextBoxPosition.col] && at(to(nextBoxPosition,RIGHT),DOWN) == Symbol.BOX && at(to(to(nextBoxPosition,RIGHT),DOWN),DOWN) == Symbol.WALL);
-								if(!(cornerLeftDown || cornerLeftUP)){
+							boolean downLeft =  !(at(nextBoxPosition,DOWN) == Symbol.BOX && (at(nextBoxPosition,LEFT) == Symbol.WALL) && (at(to(nextBoxPosition,DOWN),LEFT) == Symbol.WALL ));
+							boolean upLeft = !(at(nextBoxPosition,UP) == Symbol.BOX && (at(nextBoxPosition,LEFT) == Symbol.WALL) && (at(to(nextBoxPosition,UP),LEFT) == Symbol.WALL ));
+							boolean leftLeftUp = !(at(nextBoxPosition,LEFT) == Symbol.BOX && at(nextBoxPosition,UP) == Symbol.WALL && at(to(nextBoxPosition, LEFT), UP) == Symbol.WALL);
+							boolean leftLeftDown = !(at(nextBoxPosition,LEFT) == Symbol.BOX && at(nextBoxPosition,DOWN) == Symbol.WALL && at(to(nextBoxPosition, LEFT), DOWN) == Symbol.WALL);
+							if((downLeft && upLeft && leftLeftUp && leftLeftDown)){
+//								boolean cornerLeftUP = !(at(nextBoxPosition,LEFT) == Symbol.WALL && deadlocks[nextBoxPosition.row-1][nextBoxPosition.col] && at(to(nextBoxPosition,RIGHT),UP) == Symbol.BOX && at(to(to(nextBoxPosition,RIGHT),UP),UP) == Symbol.WALL);
+//								boolean cornerLeftDown = !(at(nextBoxPosition,LEFT) == Symbol.WALL && deadlocks[nextBoxPosition.row+1][nextBoxPosition.col] && at(to(nextBoxPosition,RIGHT),DOWN) == Symbol.BOX && at(to(to(nextBoxPosition,RIGHT),DOWN),DOWN) == Symbol.WALL);
+//								if( (cornerLeftDown && cornerLeftUP)){
 									makeNextMove(moves, box, dir,reachables);
-								}
+//								}
 							}
 						} else if(dir == UP){
-							boolean rightUp = (at(nextBoxPosition,RIGHT) == Symbol.BOX && (at(nextBoxPosition,UP) == Symbol.WALL) && (at(to(nextBoxPosition,RIGHT),UP) == Symbol.WALL ));
-							boolean leftUp = (at(nextBoxPosition,LEFT) == Symbol.BOX && (at(nextBoxPosition,UP) == Symbol.WALL) && (at(to(nextBoxPosition,LEFT),UP) == Symbol.WALL ));
-							boolean upUpRight = (at(nextBoxPosition,UP) == Symbol.BOX && at(nextBoxPosition,RIGHT) == Symbol.WALL && at(to(nextBoxPosition, UP), RIGHT) == Symbol.WALL);
-							boolean upUpLeft = (at(nextBoxPosition,UP) == Symbol.BOX && at(nextBoxPosition,LEFT) == Symbol.WALL && at(to(nextBoxPosition, UP), LEFT) == Symbol.WALL);
-							if( !(rightUp || leftUp || upUpRight || upUpLeft) ){
-								boolean cornerUpLeft = (at(nextBoxPosition,UP) == Symbol.WALL && deadlocks[nextBoxPosition.row][nextBoxPosition.col-1] && at(to(nextBoxPosition,DOWN),LEFT) == Symbol.BOX && at(to(to(nextBoxPosition,DOWN),LEFT),LEFT) == Symbol.WALL);
-								boolean cornerUpRight = (at(nextBoxPosition,UP) == Symbol.WALL && deadlocks[nextBoxPosition.row][nextBoxPosition.col+1] && at(to(nextBoxPosition,DOWN),RIGHT) == Symbol.BOX && at(to(to(nextBoxPosition,DOWN),RIGHT),RIGHT) == Symbol.WALL);
-								if(!(cornerUpLeft || cornerUpRight)){
+							boolean rightUp = !(at(nextBoxPosition,RIGHT) == Symbol.BOX && (at(nextBoxPosition,UP) == Symbol.WALL) && (at(to(nextBoxPosition,RIGHT),UP) == Symbol.WALL ));
+							boolean leftUp = !(at(nextBoxPosition,LEFT) == Symbol.BOX && (at(nextBoxPosition,UP) == Symbol.WALL) && (at(to(nextBoxPosition,LEFT),UP) == Symbol.WALL ));
+							boolean upUpRight = !(at(nextBoxPosition,UP) == Symbol.BOX && at(nextBoxPosition,RIGHT) == Symbol.WALL && at(to(nextBoxPosition, UP), RIGHT) == Symbol.WALL);
+							boolean upUpLeft = !(at(nextBoxPosition,UP) == Symbol.BOX && at(nextBoxPosition,LEFT) == Symbol.WALL && at(to(nextBoxPosition, UP), LEFT) == Symbol.WALL);
+							if( (rightUp && leftUp && upUpRight && upUpLeft) ){
+//								boolean cornerUpLeft = !(at(nextBoxPosition,UP) == Symbol.WALL && deadlocks[nextBoxPosition.row][nextBoxPosition.col-1] && at(to(nextBoxPosition,DOWN),LEFT) == Symbol.BOX && at(to(to(nextBoxPosition,DOWN),LEFT),LEFT) == Symbol.WALL);
+//								boolean cornerUpRight = !(at(nextBoxPosition,UP) == Symbol.WALL && deadlocks[nextBoxPosition.row][nextBoxPosition.col+1] && at(to(nextBoxPosition,DOWN),RIGHT) == Symbol.BOX && at(to(to(nextBoxPosition,DOWN),RIGHT),RIGHT) == Symbol.WALL);
+//								if((cornerUpLeft && cornerUpRight)){
 									makeNextMove(moves, box, dir,reachables);
-								}
+//								}
 							}
 						} else {
-							boolean rightDown = (at(nextBoxPosition,RIGHT) == Symbol.BOX && (at(nextBoxPosition,DOWN) == Symbol.WALL ) && (at(to(nextBoxPosition,RIGHT),DOWN) == Symbol.WALL));
-							boolean leftDown = (at(nextBoxPosition,LEFT) == Symbol.BOX && (at(nextBoxPosition,DOWN) == Symbol.WALL ) && (at(to(nextBoxPosition,LEFT),DOWN) == Symbol.WALL ));
-							boolean downDownRight = (at(nextBoxPosition,DOWN) == Symbol.BOX && at(nextBoxPosition,RIGHT) == Symbol.WALL && at(to(nextBoxPosition, DOWN), RIGHT) == Symbol.WALL);
-							boolean downDownLeft = (at(nextBoxPosition,DOWN) == Symbol.BOX && at(nextBoxPosition,LEFT) == Symbol.WALL && at(to(nextBoxPosition, DOWN), LEFT) == Symbol.WALL);
-							if( !(rightDown || leftDown || downDownLeft || downDownRight) ){
-								boolean cornerDownLeft = (at(nextBoxPosition,DOWN) == Symbol.WALL && deadlocks[nextBoxPosition.row][nextBoxPosition.col-1] && at(to(nextBoxPosition,UP),LEFT) == Symbol.BOX && at(to(to(nextBoxPosition,UP),LEFT),LEFT) == Symbol.WALL);
-								boolean cornerDownRight = (at(nextBoxPosition,DOWN) == Symbol.WALL && deadlocks[nextBoxPosition.row][nextBoxPosition.col+1] && at(to(nextBoxPosition,UP),RIGHT) == Symbol.BOX && at(to(to(nextBoxPosition,UP),RIGHT),RIGHT) == Symbol.WALL);
-								if(!(cornerDownLeft || cornerDownRight)){
+							boolean rightDown = !(at(nextBoxPosition,RIGHT) == Symbol.BOX && (at(nextBoxPosition,DOWN) == Symbol.WALL ) && (at(to(nextBoxPosition,RIGHT),DOWN) == Symbol.WALL));
+							boolean leftDown = !(at(nextBoxPosition,LEFT) == Symbol.BOX && (at(nextBoxPosition,DOWN) == Symbol.WALL ) && (at(to(nextBoxPosition,LEFT),DOWN) == Symbol.WALL ));
+							boolean downDownRight = !(at(nextBoxPosition,DOWN) == Symbol.BOX && at(nextBoxPosition,RIGHT) == Symbol.WALL && at(to(nextBoxPosition, DOWN), RIGHT) == Symbol.WALL);
+							boolean downDownLeft = !(at(nextBoxPosition,DOWN) == Symbol.BOX && at(nextBoxPosition,LEFT) == Symbol.WALL && at(to(nextBoxPosition, DOWN), LEFT) == Symbol.WALL);
+							if( (rightDown && leftDown && downDownLeft && downDownRight) ){
+//								boolean cornerDownLeft = !(at(nextBoxPosition,DOWN) == Symbol.WALL && deadlocks[nextBoxPosition.row][nextBoxPosition.col-1] && at(to(nextBoxPosition,UP),LEFT) == Symbol.BOX && at(to(to(nextBoxPosition,UP),LEFT),LEFT) == Symbol.WALL);
+//								boolean cornerDownRight = !(at(nextBoxPosition,DOWN) == Symbol.WALL && deadlocks[nextBoxPosition.row][nextBoxPosition.col+1] && at(to(nextBoxPosition,UP),RIGHT) == Symbol.BOX && at(to(to(nextBoxPosition,UP),RIGHT),RIGHT) == Symbol.WALL);
+//								if( (cornerDownLeft && cornerDownRight)){
 									makeNextMove(moves, box, dir,reachables);
-								}
+//								}
 							}
 						}
 
@@ -384,7 +450,7 @@ public class Board implements Comparable<Board> {
 				else {
 					//We didnt find a path to a goal for a box so add a big value
 					//since this is not a good thing
-					h += 20;
+					h += 20;//Math.sqrt(width*height);
 				}
 				
 			}
@@ -392,9 +458,30 @@ public class Board implements Comparable<Board> {
 				h -= 40;
 			}
 		}
-		
-		
 		return h;
+
+		
+//		 int h = 0;
+////       for(int i = 0; i < boxes.size(); i++) {
+////               if(at(boxes.get(i)) == Symbol.BOX)
+////                       h += Math.abs(player.row - boxes.get(i).row) + Math.abs(player.col - boxes.get(i).col);
+//////               if(at(boxes.get(i)) == Symbol.BOXGOAL)
+//////                       h = 0;
+////       }
+//
+//         for(int i = 0; i < boxes.size(); i++) {
+//                 //System.out.println(boxes.get(i).row +" " + boxes.get(i).col);
+//                 for(int j = 0; j < goals.size(); j++) {
+//                         if(at(boxes.get(i)) == Symbol.BOX)
+//                                 h += (Math.abs(goals.get(j).row - boxes.get(i).row) + Math.abs(goals.get(j).col - boxes.get(i).col));
+////                         if(at(boxes.get(i)) == Symbol.BOXGOAL)
+////                                 h /= 2;
+//                 }
+//         }
+//
+//         return h;
+		
+		
 	}
 	
 	public int calculateHeuristic(int[][] distanceMap) {
