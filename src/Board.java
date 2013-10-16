@@ -321,6 +321,7 @@ public class Board implements Comparable<Board> {
 		Node pushLocation = to(box, Direction.negDir(dir));
 		//String walk = getPlayerWalk(player, pushLocation, nodes);
 		//If the walk is not null we know the player can get to the required location to make the push
+		
 		if(reachables[pushLocation.row][pushLocation.col]){
 			
 //			System.out.println("Box: " + box);
@@ -391,6 +392,18 @@ public class Board implements Comparable<Board> {
 				h -= 40;
 			}
 		}
+		
+		
+		return h;
+	}
+	
+	public int calculateHeuristic(int[][] distanceMap) {
+		int h = 0;
+		
+		for(Node box : boxes){
+			h += distanceMap[box.row][box.col];
+		}
+		
 		return h;
 	}
 
@@ -458,6 +471,7 @@ public class Board implements Comparable<Board> {
 		//StringBuilder sb = new StringBuilder();
 		Queue<Node> q = new LinkedList<Node>();
 		boolean[][] visited = new boolean[map.length][map[0].length];
+		visited[start.row][start.col] = true;
 		//Add the start
 		//start.setDir("");
 		q.add(start);
@@ -475,7 +489,7 @@ public class Board implements Comparable<Board> {
 				//Check if we have been here already
 				if(!visited[nextNode.row][nextNode.col]){
 					//Check if we can go here
-					if(nextNode.symbol == Symbol.FREE || nextNode.symbol == Symbol.GOAL || nextNode.symbol == Symbol.PLAYER || nextNode.symbol == Symbol.PLAYERGOAL){
+					if(nextNode.symbol == Symbol.FREE|| nextNode.symbol == Symbol.GOAL || nextNode.symbol == Symbol.PLAYER || nextNode.symbol == Symbol.PLAYERGOAL){
 						//nextNode.setPrevNode(currentNode);
 						//nextNode.setDir(Direction.getString(dir));
 						q.add(nextNode);
@@ -508,11 +522,11 @@ public class Board implements Comparable<Board> {
 				//We found the goal
 				sb.append(currentNode.getDir());
 				//Start backtracking
-				Node tempNode = currentNode.getProvNode();
+				Node tempNode = currentNode.getPrevNode();
 				if(tempNode != null){
 					while(!tempNode.equals(start)){
 						sb.append(tempNode.getDir());
-						tempNode = tempNode.getProvNode();
+						tempNode = tempNode.getPrevNode();
 					}
 				}
 				return sb.reverse().toString();
@@ -538,71 +552,143 @@ public class Board implements Comparable<Board> {
 		return null;
 	}
 	
-	public String getPlayerWalk() { 
-
+//	public StringBuilder getPlayerWalk() { 
+//
+//		Node start = this.prevBoard.player; 
+//		Node stop = this.pushLocation;
+//		Node[][] map = this.prevBoard.nodes;
+//
+//		System.out.println("");
+//		System.out.println("This board");
+//		this.print();
+//		System.out.println("Prev board");
+//		this.prevBoard.print();
+//		System.out.println("Old player pos: " + start);
+//		System.out.println("Stop: " + stop);
+//		System.out.println("");
+//		
+//		//Init stuff
+//		StringBuilder sb = new StringBuilder();
+//		Queue<Node> q = new LinkedList<Node>();
+//		boolean[][] visited = new boolean[map.length][map[0].length];
+//		//Add the start
+//		start.setDir("");
+//		q.add(start);
+//
+//		Node currentNode;
+//
+//		while(!q.isEmpty()) {
+//			//Take out one element
+//			currentNode = q.poll();
+//			//Check if it goal
+//			if(currentNode.equals(stop)) {
+//				//We found the goal
+//				sb.append(currentNode.getDir());
+//				//Start backtracking
+//				Node tempNode = currentNode.getPrevNode();
+//				if(tempNode != null){
+//					while(!tempNode.equals(start)){
+//						sb.append(tempNode.getDir());
+//						tempNode = tempNode.getPrevNode();
+//					}
+//					
+//				}
+//				sb.append(Direction.getString(this.pushDir));
+//				//sb.append(Direction.getString(pushDir));
+//				
+//				//sb.reverse();
+//				
+//				
+//				
+//				String sub = sb.toString();
+//				
+//				System.out.println("sub - Path: " + sub);
+//				//System.out.println("");
+//				//return "|"+sb.reverse().append(Direction.getString(this.pushDir)).toString()+"|";
+//				return sb;
+//			}
+//
+//			//Go over each direction from this node
+//			Node nextNode;
+//			for(Direction dir : Direction.values()){
+//				nextNode = to(currentNode, dir);
+//				//Check if we have been here already
+//				if(!visited[nextNode.row][nextNode.col]){
+//					//Check if we can go here
+//					if(nextNode.symbol == Symbol.FREE || nextNode.symbol == Symbol.GOAL || nextNode.symbol == Symbol.PLAYER || nextNode.symbol == Symbol.PLAYERGOAL){
+//						nextNode.setPrevNode(currentNode);
+//						nextNode.setDir(Direction.getString(dir));
+//						q.add(nextNode);
+//						visited[nextNode.row][nextNode.col] = true;
+//					}
+//				}
+//			}
+//		}
+//		System.out.println("TOLO");
+//		
+//		//this.print();
+//		System.out.println("Start: " + start);
+//		System.out.println("Stop: " + stop);
+//		//We didn't find a path so send back null to signal that
+//		return null;
+//	}
+	
+	public String getPlayerWalk2(){
+		StringBuilder sb = new StringBuilder();
+		Queue<Node> q = new LinkedList<Node>();
+		
 		Node start = this.prevBoard.player; 
 		Node stop = this.pushLocation;
 		Node[][] map = this.prevBoard.nodes;
-
-		this.prevBoard.print();
-		System.out.println("Old player pos: " + start);
-		System.out.println("Stop: " + stop);
 		
-		//Init stuff
-		StringBuilder sb = new StringBuilder();
-		Queue<Node> q = new LinkedList<Node>();
 		boolean[][] visited = new boolean[map.length][map[0].length];
-		//Add the start
-		start.setDir("");
-		q.add(start);
-
-		Node currentNode;
 		
-		sb.append(Direction.getString(pushDir));
-
-		while(!q.isEmpty()) {
-			//Take out one element
-			currentNode = q.poll();
-			//Check if it goal
-			if(currentNode.equals(stop)) {
-				//We found the goal
-				sb.append(currentNode.getDir());
-				//Start backtracking
-				Node tempNode = currentNode.getProvNode();
-				if(tempNode != null){
-					while(!tempNode.equals(start)){
-						sb.append(tempNode.getDir());
-						tempNode = tempNode.getProvNode();
-					}
+		Node currentPos;
+		Node nextNode;
+		
+		start.setDir("");
+		start.setPrevNode(null);
+		visited[start.row][start.col] = true;
+		
+		q.add(start);
+		
+		while(!q.isEmpty()){
+			currentPos = q.poll();
+			
+			//We found the goal
+			if(currentPos.row == stop.row && currentPos.col == stop.col){
+				//Backtrack it
+				Node backTrack = currentPos;
+				while(backTrack != null){
+					sb.insert(0, backTrack.getDir());
+					backTrack = backTrack.getPrevNode();
 				}
-				//sb.reverse();
 				
-//				System.out.println("sub - Path: " + sb.toString());
-				//System.out.println("");
-				return sb.toString();
+				//Add last push
+				sb.append(Direction.getString(pushDir));
+				String subPath =  sb.toString();
+				
+				return subPath;
 			}
-
-			//Go over each direction from this node
-			Node nextNode;
-			for(Direction dir : Direction.values()){
-				nextNode = to(currentNode, dir);
-				//Check if we have been here already
+			
+			//Add all new direction
+			for(Direction dir: Direction.values()){
+				nextNode = prevBoard.to(currentPos,dir);
+				//Check the visited list
 				if(!visited[nextNode.row][nextNode.col]){
-					//Check if we can go here
+					//Check if it's a valid move location
 					if(nextNode.symbol == Symbol.FREE || nextNode.symbol == Symbol.GOAL || nextNode.symbol == Symbol.PLAYER || nextNode.symbol == Symbol.PLAYERGOAL){
-						nextNode.setPrevNode(currentNode);
+						nextNode.setPrevNode(currentPos);
 						nextNode.setDir(Direction.getString(dir));
-						q.add(nextNode);
 						visited[nextNode.row][nextNode.col] = true;
+						q.add(nextNode);
 					}
 				}
 			}
 		}
-		System.out.println("TOLO");
-		prevBoard.print();
-		System.out.println("Start: " + start);
-		System.out.println("Stop: " + stop);
-		//We didn't find a path so send back null to signal that
-		return "";
+		
+		System.out.println("THIS SHOULD NOT HAPPEND");
+		
+		return null;
 	}
 }

@@ -36,7 +36,7 @@ public class Node {
 		this.prevNode = prev;
 	}
 	
-	public Node getProvNode(){
+	public Node getPrevNode(){
 		return this.prevNode;
 	}
 	
