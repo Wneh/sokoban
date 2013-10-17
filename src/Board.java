@@ -1,8 +1,6 @@
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Queue;
-import java.util.Random;
 
 public class Board implements Comparable<Board> {
 	static Direction UP = Direction.UP;
@@ -15,14 +13,10 @@ public class Board implements Comparable<Board> {
 	int width;
 	int height;
 	int numberOfFreeBoxes;
-	int boxesOnGoal;
 	int accumulatedCost;
-//	StringBuilder path;
 	ArrayList<Node> boxes;
 	ArrayList<Node> goals;
-	public int f, g; // Total and accumulated cost
 	Board prevBoard;
-//	String walkPath;
 	Node oldPlayerPos;
 	Node pushLocation;
 	Direction pushDir;
@@ -30,7 +24,6 @@ public class Board implements Comparable<Board> {
 	public Board(String board, int width, int height) {
 
 		nodes = new Node[height][width];
-//		path = new StringBuilder();
 		boxes = new ArrayList<Node>();
 
 		goals = new ArrayList<Node>();
@@ -219,14 +212,11 @@ public class Board implements Comparable<Board> {
 	public Board(Board oldBoard, Node newPlayerPos, Direction dir) { // create a new board and move the player in a valid direction
 		this.nodes = new Node[oldBoard.getHeight()][oldBoard.getWidth()];
 		this.player = new Node('@', oldBoard.player.row, oldBoard.player.col);
-		//this.player = new Node('@',newPlayerPos.row,newPlayerPos.col);
 		this.numberOfFreeBoxes = oldBoard.numberOfFreeBoxes;
 		this.width = oldBoard.getWidth();
 		this.height = oldBoard.getHeight();
 		this.boxes = new ArrayList<Node>(oldBoard.boxes);
 		this.goals = new ArrayList<Node>(oldBoard.goals);
-		//this.path = new StringBuilder(walk);
-//		this.walkPath = walk;
 		this.accumulatedCost = oldBoard.accumulatedCost;
 		copyOldBoard(oldBoard);
 		
@@ -236,7 +226,6 @@ public class Board implements Comparable<Board> {
 		
 		
 		moveBox(newPlayerPos,dir); // make one of the valid moves;
-		//doStuff(newPlayerPos,player,to(newPlayerPos,dir));
 		this.prevBoard = oldBoard;
 		
 	}
@@ -269,7 +258,7 @@ public class Board implements Comparable<Board> {
 			currentPlayer.symbol = Symbol.GOAL;
 		}
 		else{
-			System.out.println("-----------FUCK UP FROM REMOVING OLD PLAYER");
+			System.out.println("SOMETHING WENT WRONG WHEN REMOVING OLD PLAYER");
 		}
 
 		//Move the box the new location
@@ -281,7 +270,7 @@ public class Board implements Comparable<Board> {
 			numberOfFreeBoxes--;
 		}
 		else{
-			System.out.println("-----------FUCKED UP FROM MOVING THE BOX");
+			System.out.println("SOMETHING WENT WRONG WHEN MOVING THE BOX");
 		}
 
 		//Remove the old box from the box list
@@ -301,7 +290,7 @@ public class Board implements Comparable<Board> {
 			numberOfFreeBoxes++;
 		}
 		else{
-			System.out.println("-----------FUCKED FROM SETTING THE NEW PLAYER POSITION");
+			System.out.println("SOMETHING WENT WRONG WHEN SETTING THE NEW PLAYER POSITION");
 		}
 		setPlayer(currentBox);
 		boxes.add(nextBox);
@@ -323,20 +312,19 @@ public class Board implements Comparable<Board> {
 				Node nextBoxPosition  = to(box, dir);
 				if(!deadlocks[nextBoxPosition.row][nextBoxPosition.col]){
 					if(nextBoxPosition.symbol == Symbol.FREE || nextBoxPosition.symbol == Symbol.GOAL || nextBoxPosition.symbol == Symbol.PLAYER || nextBoxPosition.symbol == Symbol.PLAYERGOAL){
-						//						It was not a deadlock for this push
-						//						and the location was okey to push
-//						makeNextMove(moves, box, dir,reachables);
+						//It was not a deadlock for this push
+						//and the location was okey to push
 						if(dir == RIGHT){
 							boolean downRight = !(at(nextBoxPosition,DOWN) == Symbol.BOX && (at(nextBoxPosition,RIGHT) == Symbol.WALL) && (at(to(nextBoxPosition,DOWN),RIGHT) == Symbol.WALL));
 							boolean upRight = !(at(nextBoxPosition,UP) == Symbol.BOX && (at(nextBoxPosition,RIGHT) == Symbol.WALL) && (at(to(nextBoxPosition,UP),RIGHT) == Symbol.WALL ));
 							boolean rightRightUp = !(at(nextBoxPosition,RIGHT) == Symbol.BOX && at(nextBoxPosition,UP) == Symbol.WALL && at(to(nextBoxPosition, RIGHT), UP) == Symbol.WALL);
 							boolean rightRightDown = !(at(nextBoxPosition,RIGHT) == Symbol.BOX && at(nextBoxPosition,DOWN) == Symbol.WALL && at(to(nextBoxPosition, RIGHT), DOWN) == Symbol.WALL);
 							if((downRight && upRight && rightRightUp && rightRightDown)){
-//								boolean cornerRightUP = !(at(nextBoxPosition,RIGHT) == Symbol.WALL && deadlocks[nextBoxPosition.row-1][nextBoxPosition.col] && at(to(nextBoxPosition,LEFT),UP) == Symbol.BOX && at(to(to(nextBoxPosition,LEFT),UP),UP) == Symbol.WALL);
-//								boolean cornerRightDown = !(at(nextBoxPosition,RIGHT) == Symbol.WALL && deadlocks[nextBoxPosition.row+1][nextBoxPosition.col] && at(to(nextBoxPosition,LEFT),DOWN) == Symbol.BOX && at(to(to(nextBoxPosition,LEFT),DOWN),DOWN) == Symbol.WALL);
-//								if((cornerRightDown && cornerRightUP)){
+								boolean cornerRightUP = !(at(nextBoxPosition,RIGHT) == Symbol.WALL && deadlocks[nextBoxPosition.row-1][nextBoxPosition.col] && at(to(nextBoxPosition,LEFT),UP) == Symbol.BOX && at(to(to(nextBoxPosition,LEFT),UP),UP) == Symbol.WALL);
+								boolean cornerRightDown = !(at(nextBoxPosition,RIGHT) == Symbol.WALL && deadlocks[nextBoxPosition.row+1][nextBoxPosition.col] && at(to(nextBoxPosition,LEFT),DOWN) == Symbol.BOX && at(to(to(nextBoxPosition,LEFT),DOWN),DOWN) == Symbol.WALL);
+								if((cornerRightDown && cornerRightUP)){
 									makeNextMove(moves, box, dir,reachables);
-//								}
+								}
 							}
 						} else if (dir == LEFT){
 							boolean downLeft =  !(at(nextBoxPosition,DOWN) == Symbol.BOX && (at(nextBoxPosition,LEFT) == Symbol.WALL) && (at(to(nextBoxPosition,DOWN),LEFT) == Symbol.WALL ));
@@ -344,11 +332,11 @@ public class Board implements Comparable<Board> {
 							boolean leftLeftUp = !(at(nextBoxPosition,LEFT) == Symbol.BOX && at(nextBoxPosition,UP) == Symbol.WALL && at(to(nextBoxPosition, LEFT), UP) == Symbol.WALL);
 							boolean leftLeftDown = !(at(nextBoxPosition,LEFT) == Symbol.BOX && at(nextBoxPosition,DOWN) == Symbol.WALL && at(to(nextBoxPosition, LEFT), DOWN) == Symbol.WALL);
 							if((downLeft && upLeft && leftLeftUp && leftLeftDown)){
-//								boolean cornerLeftUP = !(at(nextBoxPosition,LEFT) == Symbol.WALL && deadlocks[nextBoxPosition.row-1][nextBoxPosition.col] && at(to(nextBoxPosition,RIGHT),UP) == Symbol.BOX && at(to(to(nextBoxPosition,RIGHT),UP),UP) == Symbol.WALL);
-//								boolean cornerLeftDown = !(at(nextBoxPosition,LEFT) == Symbol.WALL && deadlocks[nextBoxPosition.row+1][nextBoxPosition.col] && at(to(nextBoxPosition,RIGHT),DOWN) == Symbol.BOX && at(to(to(nextBoxPosition,RIGHT),DOWN),DOWN) == Symbol.WALL);
-//								if( (cornerLeftDown && cornerLeftUP)){
+								boolean cornerLeftUP = !(at(nextBoxPosition,LEFT) == Symbol.WALL && deadlocks[nextBoxPosition.row-1][nextBoxPosition.col] && at(to(nextBoxPosition,RIGHT),UP) == Symbol.BOX && at(to(to(nextBoxPosition,RIGHT),UP),UP) == Symbol.WALL);
+								boolean cornerLeftDown = !(at(nextBoxPosition,LEFT) == Symbol.WALL && deadlocks[nextBoxPosition.row+1][nextBoxPosition.col] && at(to(nextBoxPosition,RIGHT),DOWN) == Symbol.BOX && at(to(to(nextBoxPosition,RIGHT),DOWN),DOWN) == Symbol.WALL);
+								if( (cornerLeftDown && cornerLeftUP)){
 									makeNextMove(moves, box, dir,reachables);
-//								}
+								}
 							}
 						} else if(dir == UP){
 							boolean rightUp = !(at(nextBoxPosition,RIGHT) == Symbol.BOX && (at(nextBoxPosition,UP) == Symbol.WALL) && (at(to(nextBoxPosition,RIGHT),UP) == Symbol.WALL ));
@@ -356,11 +344,11 @@ public class Board implements Comparable<Board> {
 							boolean upUpRight = !(at(nextBoxPosition,UP) == Symbol.BOX && at(nextBoxPosition,RIGHT) == Symbol.WALL && at(to(nextBoxPosition, UP), RIGHT) == Symbol.WALL);
 							boolean upUpLeft = !(at(nextBoxPosition,UP) == Symbol.BOX && at(nextBoxPosition,LEFT) == Symbol.WALL && at(to(nextBoxPosition, UP), LEFT) == Symbol.WALL);
 							if( (rightUp && leftUp && upUpRight && upUpLeft) ){
-//								boolean cornerUpLeft = !(at(nextBoxPosition,UP) == Symbol.WALL && deadlocks[nextBoxPosition.row][nextBoxPosition.col-1] && at(to(nextBoxPosition,DOWN),LEFT) == Symbol.BOX && at(to(to(nextBoxPosition,DOWN),LEFT),LEFT) == Symbol.WALL);
-//								boolean cornerUpRight = !(at(nextBoxPosition,UP) == Symbol.WALL && deadlocks[nextBoxPosition.row][nextBoxPosition.col+1] && at(to(nextBoxPosition,DOWN),RIGHT) == Symbol.BOX && at(to(to(nextBoxPosition,DOWN),RIGHT),RIGHT) == Symbol.WALL);
-//								if((cornerUpLeft && cornerUpRight)){
+								boolean cornerUpLeft = !(at(nextBoxPosition,UP) == Symbol.WALL && deadlocks[nextBoxPosition.row][nextBoxPosition.col-1] && at(to(nextBoxPosition,DOWN),LEFT) == Symbol.BOX && at(to(to(nextBoxPosition,DOWN),LEFT),LEFT) == Symbol.WALL);
+								boolean cornerUpRight = !(at(nextBoxPosition,UP) == Symbol.WALL && deadlocks[nextBoxPosition.row][nextBoxPosition.col+1] && at(to(nextBoxPosition,DOWN),RIGHT) == Symbol.BOX && at(to(to(nextBoxPosition,DOWN),RIGHT),RIGHT) == Symbol.WALL);
+								if((cornerUpLeft && cornerUpRight)){
 									makeNextMove(moves, box, dir,reachables);
-//								}
+								}
 							}
 						} else {
 							boolean rightDown = !(at(nextBoxPosition,RIGHT) == Symbol.BOX && (at(nextBoxPosition,DOWN) == Symbol.WALL ) && (at(to(nextBoxPosition,RIGHT),DOWN) == Symbol.WALL));
@@ -368,11 +356,11 @@ public class Board implements Comparable<Board> {
 							boolean downDownRight = !(at(nextBoxPosition,DOWN) == Symbol.BOX && at(nextBoxPosition,RIGHT) == Symbol.WALL && at(to(nextBoxPosition, DOWN), RIGHT) == Symbol.WALL);
 							boolean downDownLeft = !(at(nextBoxPosition,DOWN) == Symbol.BOX && at(nextBoxPosition,LEFT) == Symbol.WALL && at(to(nextBoxPosition, DOWN), LEFT) == Symbol.WALL);
 							if( (rightDown && leftDown && downDownLeft && downDownRight) ){
-//								boolean cornerDownLeft = !(at(nextBoxPosition,DOWN) == Symbol.WALL && deadlocks[nextBoxPosition.row][nextBoxPosition.col-1] && at(to(nextBoxPosition,UP),LEFT) == Symbol.BOX && at(to(to(nextBoxPosition,UP),LEFT),LEFT) == Symbol.WALL);
-//								boolean cornerDownRight = !(at(nextBoxPosition,DOWN) == Symbol.WALL && deadlocks[nextBoxPosition.row][nextBoxPosition.col+1] && at(to(nextBoxPosition,UP),RIGHT) == Symbol.BOX && at(to(to(nextBoxPosition,UP),RIGHT),RIGHT) == Symbol.WALL);
-//								if( (cornerDownLeft && cornerDownRight)){
+								boolean cornerDownLeft = !(at(nextBoxPosition,DOWN) == Symbol.WALL && deadlocks[nextBoxPosition.row][nextBoxPosition.col-1] && at(to(nextBoxPosition,UP),LEFT) == Symbol.BOX && at(to(to(nextBoxPosition,UP),LEFT),LEFT) == Symbol.WALL);
+								boolean cornerDownRight = !(at(nextBoxPosition,DOWN) == Symbol.WALL && deadlocks[nextBoxPosition.row][nextBoxPosition.col+1] && at(to(nextBoxPosition,UP),RIGHT) == Symbol.BOX && at(to(to(nextBoxPosition,UP),RIGHT),RIGHT) == Symbol.WALL);
+								if( (cornerDownLeft && cornerDownRight)){
 									makeNextMove(moves, box, dir,reachables);
-//								}
+								}
 							}
 						}
 
@@ -385,14 +373,8 @@ public class Board implements Comparable<Board> {
 
 	private void makeNextMove(ArrayList<Board> moves, Node box, Direction dir,boolean[][] reachables) {
 		Node pushLocation = to(box, Direction.negDir(dir));
-		//String walk = getPlayerWalk(player, pushLocation, nodes);
-		//If the walk is not null we know the player can get to the required location to make the push
-		
+		//If the walk is not null we know the player can get to the required location to make the push		
 		if(reachables[pushLocation.row][pushLocation.col]){
-			
-//			System.out.println("Box: " + box);
-//			System.out.println("Next: " + pushLocation);
-//			print();
 			//Create a new Board with the box moved
 			moves.add(new Board(this,box,dir));
 		} else {
@@ -450,7 +432,7 @@ public class Board implements Comparable<Board> {
 				else {
 					//We didnt find a path to a goal for a box so add a big value
 					//since this is not a good thing
-					h += 20;//Math.sqrt(width*height);
+					h += 20;
 				}
 				
 			}
@@ -458,30 +440,7 @@ public class Board implements Comparable<Board> {
 				h -= 40;
 			}
 		}
-		return h;
-
-		
-//		 int h = 0;
-////       for(int i = 0; i < boxes.size(); i++) {
-////               if(at(boxes.get(i)) == Symbol.BOX)
-////                       h += Math.abs(player.row - boxes.get(i).row) + Math.abs(player.col - boxes.get(i).col);
-//////               if(at(boxes.get(i)) == Symbol.BOXGOAL)
-//////                       h = 0;
-////       }
-//
-//         for(int i = 0; i < boxes.size(); i++) {
-//                 //System.out.println(boxes.get(i).row +" " + boxes.get(i).col);
-//                 for(int j = 0; j < goals.size(); j++) {
-//                         if(at(boxes.get(i)) == Symbol.BOX)
-//                                 h += (Math.abs(goals.get(j).row - boxes.get(i).row) + Math.abs(goals.get(j).col - boxes.get(i).col));
-////                         if(at(boxes.get(i)) == Symbol.BOXGOAL)
-////                                 h /= 2;
-//                 }
-//         }
-//
-//         return h;
-		
-		
+		return h;	
 	}
 	
 	public int calculateHeuristic(int[][] distanceMap) {
@@ -517,11 +476,7 @@ public class Board implements Comparable<Board> {
 	public void print() {
 		for(int i = 0; i < nodes.length; i++) {
 			for(int j= 0; j < nodes[i].length; j++) {
-				//							if(deadlocks[i][j]){
-				//								System.out.print("¤");
-				//							} else {
 				System.out.print(nodes[i][j].toChar());
-				//							}
 			}
 			System.out.println();
 		}
@@ -555,12 +510,10 @@ public class Board implements Comparable<Board> {
 	public boolean[][] getReachables(Node start,Node[][] map) {
 
 		//Init stuff
-		//StringBuilder sb = new StringBuilder();
 		Queue<Node> q = new LinkedList<Node>();
 		boolean[][] visited = new boolean[map.length][map[0].length];
 		visited[start.row][start.col] = true;
 		//Add the start
-		//start.setDir("");
 		q.add(start);
 
 		Node currentNode;
@@ -577,8 +530,6 @@ public class Board implements Comparable<Board> {
 				if(!visited[nextNode.row][nextNode.col]){
 					//Check if we can go here
 					if(nextNode.symbol == Symbol.FREE|| nextNode.symbol == Symbol.GOAL || nextNode.symbol == Symbol.PLAYER || nextNode.symbol == Symbol.PLAYERGOAL){
-						//nextNode.setPrevNode(currentNode);
-						//nextNode.setDir(Direction.getString(dir));
 						q.add(nextNode);
 						visited[nextNode.row][nextNode.col] = true;
 					}
@@ -639,88 +590,9 @@ public class Board implements Comparable<Board> {
 		return null;
 	}
 	
-//	public StringBuilder getPlayerWalk() { 
-//
-//		Node start = this.prevBoard.player; 
-//		Node stop = this.pushLocation;
-//		Node[][] map = this.prevBoard.nodes;
-//
-//		System.out.println("");
-//		System.out.println("This board");
-//		this.print();
-//		System.out.println("Prev board");
-//		this.prevBoard.print();
-//		System.out.println("Old player pos: " + start);
-//		System.out.println("Stop: " + stop);
-//		System.out.println("");
-//		
-//		//Init stuff
-//		StringBuilder sb = new StringBuilder();
-//		Queue<Node> q = new LinkedList<Node>();
-//		boolean[][] visited = new boolean[map.length][map[0].length];
-//		//Add the start
-//		start.setDir("");
-//		q.add(start);
-//
-//		Node currentNode;
-//
-//		while(!q.isEmpty()) {
-//			//Take out one element
-//			currentNode = q.poll();
-//			//Check if it goal
-//			if(currentNode.equals(stop)) {
-//				//We found the goal
-//				sb.append(currentNode.getDir());
-//				//Start backtracking
-//				Node tempNode = currentNode.getPrevNode();
-//				if(tempNode != null){
-//					while(!tempNode.equals(start)){
-//						sb.append(tempNode.getDir());
-//						tempNode = tempNode.getPrevNode();
-//					}
-//					
-//				}
-//				sb.append(Direction.getString(this.pushDir));
-//				//sb.append(Direction.getString(pushDir));
-//				
-//				//sb.reverse();
-//				
-//				
-//				
-//				String sub = sb.toString();
-//				
-//				System.out.println("sub - Path: " + sub);
-//				//System.out.println("");
-//				//return "|"+sb.reverse().append(Direction.getString(this.pushDir)).toString()+"|";
-//				return sb;
-//			}
-//
-//			//Go over each direction from this node
-//			Node nextNode;
-//			for(Direction dir : Direction.values()){
-//				nextNode = to(currentNode, dir);
-//				//Check if we have been here already
-//				if(!visited[nextNode.row][nextNode.col]){
-//					//Check if we can go here
-//					if(nextNode.symbol == Symbol.FREE || nextNode.symbol == Symbol.GOAL || nextNode.symbol == Symbol.PLAYER || nextNode.symbol == Symbol.PLAYERGOAL){
-//						nextNode.setPrevNode(currentNode);
-//						nextNode.setDir(Direction.getString(dir));
-//						q.add(nextNode);
-//						visited[nextNode.row][nextNode.col] = true;
-//					}
-//				}
-//			}
-//		}
-//		System.out.println("TOLO");
-//		
-//		//this.print();
-//		System.out.println("Start: " + start);
-//		System.out.println("Stop: " + stop);
-//		//We didn't find a path so send back null to signal that
-//		return null;
-//	}
+
 	
-	public String getPlayerWalk2(){
+	public String getPlayerWalk(){
 		StringBuilder sb = new StringBuilder();
 		Queue<Node> q = new LinkedList<Node>();
 		

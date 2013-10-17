@@ -3,7 +3,6 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.PriorityQueue;
@@ -62,7 +61,6 @@ public class Solver {
 		Board initialBoard = new Board(initboard, width, height);
 
 		generateDistanceMap(initialBoard.nodes);
-//				initialBoard.printDeadlock();
 
 		initialBoard.accumulatedCost = initialBoard.calculateHeuristic(distanceMap);
 		PriorityQueue<Board> queue = new PriorityQueue<Board>();
@@ -78,7 +76,7 @@ public class Solver {
 				StringBuilder sb = new StringBuilder();
 				Board nextBoard = oldBoard;
 				while(nextBoard.prevBoard != null){
-					sb.insert(0, nextBoard.getPlayerWalk2());
+					sb.insert(0, nextBoard.getPlayerWalk());
 					nextBoard = nextBoard.prevBoard;
 				}
 
@@ -158,14 +156,6 @@ public class Solver {
 				visited[x][y] = true;
 			}
 		}
-
-		//		for(int i = 0; i < map.length; i++){
-		//			for(int j = 0; j < map[0].length; j++){
-		//				System.out.print(distanceMap[i][j] + " ");
-		//			}
-		//			System.out.println();
-		//		}
-
 	}
 
 	private boolean visited(Board board) {
