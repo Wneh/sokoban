@@ -1,3 +1,3 @@
 #Sokoban
 
-new readme :) 
+Archived school project for AI course at KTH
